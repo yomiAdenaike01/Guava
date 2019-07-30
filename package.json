@@ -1,0 +1,25 @@
+{
+  "name": "guava",
+  "version": "1.0.0",
+  "description": "A plugin for Graviton editor that will download and install Java on the user's machine if they don't have it.",
+  "main": "main.js",
+  "dependencies": {
+    "electron": "^6.0.0"
+  },
+  "devDependencies": {
+    "mocha": "^6.2.0"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "keywords": [
+    "java",
+    "gravitor",
+    "text",
+    "editor",
+    "download-manager",
+    "electron"
+  ],
+  "author": "Oluwayomi Adenaike",
+  "license": "ISC"
+}
