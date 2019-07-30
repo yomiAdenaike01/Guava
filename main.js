@@ -28,7 +28,7 @@ const InitJavaDownloadAndInstallation = (err) => {
  * Create a new notification once it has been completed.
  *  Request if they want to install
  * */ 
-export function DownloadJava() {
+ function DownloadJava() {
   //Display notification of download 
   new Notification("Download","Currently downloading the latest java version...");
   //init the download
@@ -46,7 +46,7 @@ export function DownloadJava() {
  * Urge them to restart the editor once the installation is done.
  * @param {*} pathToInstallJava 
  */
-export function InstallJava(pathToInstallJava){
+ function InstallJava(pathToInstallJava){
 
 }
 
