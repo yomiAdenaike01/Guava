@@ -31,6 +31,7 @@ const InitJavaDownloadAndInstallation = (err) => {
 export function DownloadJava() {
   //Display notification of download 
   new Notification("Download","Currently downloading the latest java version...");
+  //init the download
   remote.getCurrentWebContents().downloadURL("https://www.google.com/search?q=image&tbm=isch&source=iu&ictx=1&fir=QJ7Sqsi_rIj3AM%253A%252CGqyXoQNMf1XwFM%252C_&vet=1&usg=AI4_-kTbcVAM2zKBISEuO0GJQnw5nvB5dg&sa=X&ved=2ahUKEwjp9pa2qtvjAhWLZMAKHXCfC3YQ9QEwAHoECAMQMg#imgrc=QJ7Sqsi_rIj3AM:");
 
   //Check the download progress
