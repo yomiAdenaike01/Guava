@@ -1,8 +1,8 @@
 {
-  "name": "guava",
+  "name": "Guava",
   "folder":"guava",
   "version": "0.0.1-alpha",
-  "description": "A plugin for Graviton editor that will download and install Java on the user's machine if they don't have it.",
+  "description": "A plugin that will download and install Java on the user's machine if they don't have it.",
   "main": "main.js",
   "dependencies": {
     "electron": "^6.0.0"
@@ -22,5 +22,5 @@
     "electron"
   ],
   "author": "Oluwayomi Adenaike",
-  "license": "ISC"
+  "license": "MIT"
 }
