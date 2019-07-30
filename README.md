@@ -1,4 +1,4 @@
-<img src="https://lh3.googleusercontent.com/GCArKpv652VMwykbpAfkua4NOIgcrMZ03yfHxxqbWE9U0_218rtBCwsnx_PTDXchse97t8H_rg=w327-h336-no" sanitize="true"  width="100" height="100"/>
+<img src="https://s4.aconvert.com/convert/p3r68-cdx67/cbv4f-tlajy.svg" sanitize="true"  width="200" height="200"/>
 
 
 # Guava 
