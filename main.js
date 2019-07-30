@@ -8,13 +8,13 @@ const path = require("path");
  * If the environment variable is set
  * If the javac is downloaded
  */
-const javaOnMachineState = require("./javaState.json");
+const DB = require("./db.json");
 
 //Globally define download path
 var downloadFilePath;
 
 //Checks for java installation
-if(process.platform === "win32" && javaOnMachineState.is_javac_on_machine === false){
+if(process.platform === "win32" && DB.java_installation_path === null){
 cp.exec("javac -version",(err,stdout,stderr)=>{
     if(err){
       InitJavaDownloadAndInstallation(err);
@@ -24,6 +24,8 @@ cp.exec("javac -version",(err,stdout,stderr)=>{
       console.log("Complete Output: "+stdout);
     }
   });
+}else if(DB.java_installation_path !== null){
+  InstallJava("installation_found",DB.java_installation_path);
 }
   /**
  * 
@@ -31,7 +33,7 @@ cp.exec("javac -version",(err,stdout,stderr)=>{
  * Requests to download java 
  */
 const InitJavaDownloadAndInstallation = (err) => {
-  console.log(javaOnMachineState.java_installation_path);
+  console.log(DB.java_installation_path);
    new Notification("Java compiler not found","Do you want to download Java ?",{
     "Download Java":DownloadJava
 });
@@ -41,23 +43,37 @@ const InitJavaDownloadAndInstallation = (err) => {
  * Downloads the JDK from alternative source (Oracle rejects the downloads)
  * Displays notifications on download and on-complete.
  * Saves the download to the users downloads folder
+ * 
+ * JAVA LINK =  https://javadl.oracle.com/webapps/download/AutoDL?BundleId=238713_478a62b7d4e34b78b671c754eaaf38ab
+ * 
+ * TEST LINK = https://www.google.com/search?q=image&tbm=isch&source=iu&ictx=1&fir=QJ7Sqsi_rIj3AM%253A%252CGqyXoQNMf1XwFM%252C_&vet=1&usg=AI4_-kTbcVAM2zKBISEuO0GJQnw5nvB5dg&sa=X&ved=2ahUKEwjv__3Xx93jAhVRa8AKHX7GBQ4Q9QEwAHoECAcQMg#imgrc=QJ7Sqsi_rIj3AM:
  */ 
  const DownloadJava =()=> {
 
     let downloadProgress;
-   
     CreateProgressBar();
    
     new Notification("JDK Progress","Check the console to view the download progress, We will notify you when the download is complete.");
     let userDownloadPath = app.getPath("downloads").toString();
+
     let downloadURL = "https://javadl.oracle.com/webapps/download/AutoDL?BundleId=238713_478a62b7d4e34b78b671c754eaaf38ab" ;
+
+    
     remote.getCurrentWebContents().downloadURL(downloadURL);
-    remote.getCurrentWebContents().session.on("will-download",(event,item,webContents)=>{
-      
+    remote.getCurrentWebContents().session.on("will-download",(event,item,webContents)=>{  
+
       item.setSavePath(userDownloadPath);
       downloadFilePath = item.getSavePath()+'\\'+item.getFilename();
 
+      DB.java_installation_path = downloadFilePath;
+
       item.on("updated",(event,state)=>{
+        if(state === "interrupted"){
+          new Notification("Download Interrupted", "The Java JDK download has been interrupted, woudld you like to restart the download ?",{"Yes":function()
+        {
+          RemoveProgressBar();
+        }})
+        }
         if(state === "progressing"){
           downloadProgress = item.getReceivedBytes() * 100/ item.getTotalBytes();
           UpdateProgressBar(downloadProgress);
@@ -67,7 +83,7 @@ const InitJavaDownloadAndInstallation = (err) => {
       item.once("done",(event,state)=>{
         if(state === "completed"){
           new Notification("Download Complete","Java JDK download complete! Would you like us to run the installation for you ?",{"Install":function(){
-              InstallJava(downloadFilePath);
+              InstallJava("",downloadFilePath);
             }
           });
         }
@@ -78,21 +94,42 @@ const InitJavaDownloadAndInstallation = (err) => {
 
 /**
  * Get the download save path and run the installation
+ * Hoisting 
  */
-const InstallJava = (savePath) => {
+function InstallJava(state,savePath) {
+  if(state !== "installation_found"){
   RemoveProgressBar();
-  if(javaOnMachineState.java_installation_path == null){
     //Write installation path to JSON file
-    javaOnMachineState.java_installation_path = savePath;
-    fs.writeFileSync(path.resolve(__dirname,savePath),JSON.stringify(javaOnMachineState));
+    DB.java_installation_path = savePath;
+    fs.writeFile(path.resolve(__dirname,"./db.json"),JSON.stringify(DB),(err)=>{
+      if(err){
+        console.log(err);
+      }else{
+        console.log("Write complete!");
+        console.log(JSON.stringify(DB));
+        RunInstallCommand(savePath);
+      }
+    });
+}else{
+  new Notification("JDK Download File Found !","We found a prior downloaded JDK file, would you like to install that ?",{"Install":function(){
+    RunInstallCommand(DB.java_installation_path);
   }
+});
+}
+}
 
-  cp.execFile(savePath,(err,data)=>{
+
+/**
+ * 
+ * @param {*} savePath 
+ */
+function RunInstallCommand(savePath){
+cp.execFile(savePath,(err,data)=>{
    
     if(err){
       console.log(err);
       new Notification("Error!","Error when installing Java, do you want to try again",{"Yes":function(){
-        InstallJava(savePath);
+        InstallJava("",savePath);
       }});
 
     }else{
@@ -112,28 +149,18 @@ const SetJavaEnvironmentVariable = () =>{
     }
   });
 }
-/**
- * Writes to json file
- */
-const SetJSONFile = () =>{
-  let jsonDBPath;
-}
 
 const CreateProgressBar = () =>{
-  
   //Create the wrapper
   let progressBar = document.createElement("div");
   progressBar.classList.add("download_progress_bar");
+
   progressBar.style.position = "fixed";
   progressBar.style.bottom = "0";
-  progressBar.style.background = "#444";
+  progressBar.style.background = "#222";
+  progressBar.style.padding = "5px";
+  progressBar.style.margin = "6px";
   progressBar.style.width = "100%";
-  progressBar.style.color = "white";
-  progressBar.style.fontSize = "15px";
-  progressBar.style.fontWeight = "300";
-  progressBar.textContent = "Java JDK download progress...";
-  progressBar.style.textAlign = "center";
-  progressBar.style.transition = ".26s ease all";
 
   //Create the innerbar to fill the progress
   let innerBar = document.createElement("div");
@@ -144,10 +171,11 @@ const CreateProgressBar = () =>{
   innerBar.style.background = "linear-gradient(120deg, #f6d365 0%, #fda085 100%)";
   innerBar.style.top = "0";
   innerBar.style.bottom = "0";
-
+  innerBar.style.borderRadius = progressBar.style.borderRadius;
   //Append innerbar
   progressBar.appendChild(innerBar);
-  //Append to document body
+  
+  //Append to document boddy if there is no progress bar 
   document.body.append(progressBar);
 }
 
@@ -160,16 +188,18 @@ const UpdateProgressBar = (progress) => {
   if(document.querySelector(".inner-bar")){
     let depreciatingProgress = 100 - progress;
     let innerProgressBar = document.querySelector(".inner-bar");
+ 
     innerProgressBar.style.right = depreciatingProgress.toString() + "%"
   }
 }
 
 /**
  * Remove the progress bar.
+ * Hoisting so that it can be run from wherever
  */
- const RemoveProgressBar = () =>{
+ function RemoveProgressBar(){
    if(document.querySelector(".download_progress_bar")){
     let ProgressBarWrapper = document.querySelector(".download_progress_bar");
-    document.removeChild(ProgressBarWrapper);
+    document.body.removeChild(ProgressBarWrapper);
    }
  }
