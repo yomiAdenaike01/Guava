@@ -93,17 +93,8 @@ function InstallJava(state,savePath) {
   if(state !== "installation_found"){
   RemoveProgressBar();
     //Write installation path to JSON file
-    OverWriteDB(savePath);
     DB.java_installation_path = savePath;
-    fs.writeFile(path.resolve(__dirname,"./db.json"),JSON.stringify(DB),(err)=>{
-      if(err){
-        console.log(err);
-      }else{
-        console.log("Write complete!");
-        console.log(JSON.stringify(DB));
-        RunInstallCommand(savePath);
-      }
-    });
+    OverWriteDB();
 }else{
   new Notification("JDK Download File Found !","We found a prior downloaded JDK file, would you like to install it or re-download a new version ?",
   {"Install":function(){
@@ -211,3 +202,17 @@ const UpdateProgressBar = (progress) => {
    }
  }
 
+/**
+ * To overwrite the json file
+ */
+function OverWriteDB(){
+  fs.writeFile(path.resolve(__dirname,"./db.json"),JSON.stringify(DB),(err)=>{
+    if(err){
+      console.log(err);
+    }else{
+      console.log("Write complete!");
+      console.log(JSON.stringify(DB));
+      RunInstallCommand(savePath);
+    }
+  });
+}
