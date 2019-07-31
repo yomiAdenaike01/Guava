@@ -1,6 +1,7 @@
 <div align="center">
- <img src="./logo.png" sanitize="true"/>
- <img src="https://raw.githubusercontent.com/Graviton-Code-Editor/website/master/src/badges/made_for_graviton.svg?sanitize=true" alt="MadeForGraviton" style="max-width:100%;">
+ <img src="./logo.png" sanitize="true" width="400" height="150"/>
+
+ <img src="https://raw.githubusercontent.com/Graviton-Code-Editor/website/master/src/badges/made_for_graviton.svg?sanitize=true" alt="MadeForGraviton">
 
  ![GitHub package.json version](https://img.shields.io/github/package-json/v/yomiAdenaike01/Guava?style=flat-square) [![HitCount](http://hits.dwyl.io/yomiAdenaike01/Guava.svg)](http://hits.dwyl.io/yomiAdenaike01/Guava)
 </div>
