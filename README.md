@@ -1,5 +1,5 @@
 <div align="center">
- <img src="./logo.png" sanitize="true" width="400" height="150"/></br>
+ <img src="./logo.png" sanitize="true" width="460" height="150"/></br>
 
  <img src="https://raw.githubusercontent.com/Graviton-Code-Editor/website/master/src/badges/made_for_graviton.svg?sanitize=true" alt="MadeForGraviton">
 

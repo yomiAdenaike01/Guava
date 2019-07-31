@@ -3,16 +3,9 @@ const remote = require("electron").remote;
 const {shell,dialog,app} = require("electron").remote;
 const fs = require("fs");
 const path = require("path");
-/**
- * Have java installed 
- * If the environment variable is set
- * If the javac is downloaded
- */
-const DB = require("./db.json");
-
+const DB = require(path.join(__dirname,"./db.json"));
 //Globally define download path
 var downloadFilePath;
-
 //Checks for java installation
 if(process.platform === "win32" && DB.java_installation_path === null){
 cp.exec("javac -version",(err,stdout,stderr)=>{
@@ -93,13 +86,14 @@ const InitJavaDownloadAndInstallation = (err) => {
 
 
 /**
- * Get the download save path and run the installation
+ * Controls the installlation process
  * Hoisting 
  */
 function InstallJava(state,savePath) {
   if(state !== "installation_found"){
   RemoveProgressBar();
     //Write installation path to JSON file
+    OverWriteDB(savePath);
     DB.java_installation_path = savePath;
     fs.writeFile(path.resolve(__dirname,"./db.json"),JSON.stringify(DB),(err)=>{
       if(err){
@@ -111,7 +105,8 @@ function InstallJava(state,savePath) {
       }
     });
 }else{
-  new Notification("JDK Download File Found !","We found a prior downloaded JDK file, would you like to install that ?",{"Install":function(){
+  new Notification("JDK Download File Found !","We found a prior downloaded JDK file, would you like to install it or re-download a new version ?",
+  {"Install":function(){
     RunInstallCommand(DB.java_installation_path);
   }
 });
@@ -122,20 +117,32 @@ function InstallJava(state,savePath) {
 /**
  * 
  * @param {*} savePath 
+ * Hoisting
+ * Runs the installation command 
  */
 function RunInstallCommand(savePath){
 cp.execFile(savePath,(err,data)=>{
-   
     if(err){
-      console.log(err);
-      new Notification("Error!","Error when installing Java, do you want to try again",{"Yes":function(){
-        InstallJava("",savePath);
-      }});
-
+      InstallationError(err)    
     }else{
       new Notification("Installing Java","Running the java installation, once complete follow the following instructions")
     }
   });
+}
+/**
+ * Display notification for opening the containing folder or open the dev tools to inspect the error.
+ * @param {*} err 
+ */
+function InstallationError(err){
+  console.log(err);
+  new Notification("Error!","Error when attempting to install Java, do you want us to open the containing folder ?",{"Open installation folder":function(){
+    shell.showItemInFolder(DB.java_installation_path);
+  }, "View error in console":function(){
+    remote.getCurrentWebContents().openDevTools();
+  }
+
+
+});
 }
 
 /**
@@ -195,7 +202,7 @@ const UpdateProgressBar = (progress) => {
 
 /**
  * Remove the progress bar.
- * Hoisting so that it can be run from wherever
+ * Hoisting
  */
  function RemoveProgressBar(){
    if(document.querySelector(".download_progress_bar")){
@@ -203,3 +210,4 @@ const UpdateProgressBar = (progress) => {
     document.body.removeChild(ProgressBarWrapper);
    }
  }
+
