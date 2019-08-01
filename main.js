@@ -3,12 +3,12 @@ const remote = require("electron").remote;
 const {shell,dialog,app} = require("electron").remote;
 const fs = require("fs");
 const path = require("path");
-const DB = require(path.join(__dirname,"./db.json"));
-//Globally define download path
-var downloadFilePath;
-//Checks for java installation
-if(process.platform === "win32" && DB.java_installation_path === null){
-cp.exec("javac -version",(err,stdout,stderr)=>{
+const progressBar = require(path.join(__dirname,"./progressBar"));
+/**
+ * Check for java
+ */
+function RunJavaCheck(){
+  cp.exec("javac -version",(err,stdout,stderr)=>{
     if(err){
       InitJavaDownloadAndInstallation(err);
     }else if(stderr){
@@ -17,8 +17,12 @@ cp.exec("javac -version",(err,stdout,stderr)=>{
       console.log("Complete Output: "+stdout);
     }
   });
-}else if(DB.java_installation_path !== null){
-  InstallJava("installation_found",DB.java_installation_path);
+}
+
+if(process.platform === "win32" && localStorage.getItem("save_path") === null){
+  RunJavaCheck();
+}else if(localStorage.getItem("save_path") !== null){
+  InstallJavaController("installation_found",localStorage.getItem("save_path"));
 }
   /**
  * 
@@ -26,7 +30,7 @@ cp.exec("javac -version",(err,stdout,stderr)=>{
  * Requests to download java 
  */
 const InitJavaDownloadAndInstallation = (err) => {
-  console.log(DB.java_installation_path);
+  console.log(localStorage.getItem("save_path"));
    new Notification("Java compiler not found","Do you want to download Java ?",{
     "Download Java":DownloadJava
 });
@@ -44,8 +48,8 @@ const InitJavaDownloadAndInstallation = (err) => {
  const DownloadJava =()=> {
 
     let downloadProgress;
-    CreateProgressBar();
-   
+    progressBar.CreateProgressBar();
+
     new Notification("JDK Progress","Check the console to view the download progress, We will notify you when the download is complete.");
     let userDownloadPath = app.getPath("downloads").toString();
 
@@ -58,25 +62,30 @@ const InitJavaDownloadAndInstallation = (err) => {
       item.setSavePath(userDownloadPath);
       downloadFilePath = item.getSavePath()+'\\'+item.getFilename();
 
-      DB.java_installation_path = downloadFilePath;
-
       item.on("updated",(event,state)=>{
+
         if(state === "interrupted"){
           new Notification("Download Interrupted", "The Java JDK download has been interrupted, woudld you like to restart the download ?",{"Yes":function()
         {
-          RemoveProgressBar();
+          progressBar.RemoveProgressBar();
+
         }})
         }
+
         if(state === "progressing"){
           downloadProgress = item.getReceivedBytes() * 100/ item.getTotalBytes();
-          UpdateProgressBar(downloadProgress);
+          progressBar.UpdateProgressBar(downloadProgress);
         }
       });
 
       item.once("done",(event,state)=>{
         if(state === "completed"){
+          //Set the local storage
+          localStorage.setItem("save_path",downloadFilePath);
+
           new Notification("Download Complete","Java JDK download complete! Would you like us to run the installation for you ?",{"Install":function(){
-              InstallJava("",downloadFilePath);
+            //Get the local storage
+              InstallJavaController("",localStorage.getItem("save_path"));
             }
           });
         }
@@ -89,29 +98,39 @@ const InitJavaDownloadAndInstallation = (err) => {
  * Controls the installlation process
  * Hoisting 
  */
-function InstallJava(state,savePath) {
+function InstallJavaController(state,savePath) {
   if(state !== "installation_found"){
-  RemoveProgressBar();
+  progressBar.RemoveProgressBar();
     //Write installation path to JSON file
-    DB.java_installation_path = savePath;
-    OverWriteDB();
-}else{
-  new Notification("JDK Download File Found !","We found a prior downloaded JDK file, would you like to install it or re-download a new version ?",
-  {"Install":function(){
-    RunInstallCommand(DB.java_installation_path);
+  }else{
+    new Notification("JDK Download File Found !","We found a prior downloaded JDK file, would you like to install it or re-download a new version ?",
+    
+    {"Install":function(){
+
+      RunInstallCommand();
+
+    },"No, I have already installed this":function(){
+    
+      new Notification("Set Environment Variable","Have you set the environment variable for the compiler ?",{
+        "No, can you set it for me ?":function(){
+
+        },"Yes, I have.":function(){
+          RunJavaCheck()
+        }
+      });
+    }
+  });
   }
-});
-}
 }
 
 
 /**
  * 
- * @param {*} savePath 
  * Hoisting
  * Runs the installation command 
  */
-function RunInstallCommand(savePath){
+function RunInstallCommand(){
+  var savePath = localStorage.getItem("save_path");
 cp.execFile(savePath,(err,data)=>{
     if(err){
       InstallationError(err)    
@@ -127,7 +146,7 @@ cp.execFile(savePath,(err,data)=>{
 function InstallationError(err){
   console.log(err);
   new Notification("Error!","Error when attempting to install Java, do you want us to open the containing folder ?",{"Open installation folder":function(){
-    shell.showItemInFolder(DB.java_installation_path);
+    shell.showItemInFolder(localStorage.getItem("save_path"));
   }, "View error in console":function(){
     remote.getCurrentWebContents().openDevTools();
   }
@@ -140,7 +159,7 @@ function InstallationError(err){
  * Get the request the java installation path 
  * Set the environmental variable from there
  */
-const SetJavaEnvironmentVariable = () =>{
+function SetJavaEnvironmentVariable(){
   dialog.showOpenDialog(remote.getCurrentWindow(),null,(file)=>{
     if(file !== undefined){
       
@@ -148,71 +167,3 @@ const SetJavaEnvironmentVariable = () =>{
   });
 }
 
-const CreateProgressBar = () =>{
-  //Create the wrapper
-  let progressBar = document.createElement("div");
-  progressBar.classList.add("download_progress_bar");
-
-  progressBar.style.position = "fixed";
-  progressBar.style.bottom = "0";
-  progressBar.style.background = "#222";
-  progressBar.style.padding = "5px";
-  progressBar.style.margin = "6px";
-  progressBar.style.width = "100%";
-
-  //Create the innerbar to fill the progress
-  let innerBar = document.createElement("div");
-  innerBar.classList.add("inner-bar")
-  innerBar.style.position = "absolute";
-  innerBar.style.left = "0";
-  innerBar.style.right = "100%";
-  innerBar.style.background = "linear-gradient(120deg, #f6d365 0%, #fda085 100%)";
-  innerBar.style.top = "0";
-  innerBar.style.bottom = "0";
-  innerBar.style.borderRadius = progressBar.style.borderRadius;
-  //Append innerbar
-  progressBar.appendChild(innerBar);
-  
-  //Append to document boddy if there is no progress bar 
-  document.body.append(progressBar);
-}
-
-
-/**
- * Updates the progress bar
- * @param {*} progress 
- */
-const UpdateProgressBar = (progress) => {
-  if(document.querySelector(".inner-bar")){
-    let depreciatingProgress = 100 - progress;
-    let innerProgressBar = document.querySelector(".inner-bar");
- 
-    innerProgressBar.style.right = depreciatingProgress.toString() + "%"
-  }
-}
-
-/**
- * Remove the progress bar.
- * Hoisting
- */
- function RemoveProgressBar(){
-   if(document.querySelector(".download_progress_bar")){
-    let ProgressBarWrapper = document.querySelector(".download_progress_bar");
-    document.body.removeChild(ProgressBarWrapper);
-   }
- }
-
-/**
- * To overwrite the json file
- */
-function OverWriteDB(){
-  fs.writeFile(path.resolve(__dirname,"./db.json"),JSON.stringify(DB),(err)=>{
-    if(err){
-      console.log(err);
-    }else{
-      console.log("Write complete!");
-      console.log(JSON.stringify(DB));
-      RunInstallCommand(savePath);
-    }
-  });
-}
