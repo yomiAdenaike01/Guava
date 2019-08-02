@@ -4,13 +4,20 @@ const {shell,dialog,app} = require("electron").remote;
 const fs = require("fs");
 const path = require("path");
 const ProgressBar = require(path.join(__dirname,"./ProgressBar"));
-
+const sudo = require("sudo-prompt");
+let mainTimeOut = 1500;
+//Permissions dialog
+var permissionsDialogOptions = {
+  name: "Graviton",
+  icns:"icon2.ico"
+}
 /**
  * Runs the method after 1 second to not overwhelm the user
  */
 setTimeout(function(){
+  RequestPermissions();
   init();
-},2000);
+},mainTimeOut);
 
 
   //Create menu item for java 
@@ -38,7 +45,12 @@ function init(){
     InstallJavaController("installation_found",localStorage.getItem("save_path"));
   }
 }
+/**
+ * Displays prompt to run the commands
+ */
+function RequestPermissions(){
 
+}
 
 /**
  * Check for java
@@ -157,7 +169,7 @@ function InstallJavaController(state,savePath) {
  */
 function RunInstallCommand(){
   var savePath = localStorage.getItem("save_path");
-  cp.execFile(savePath,(err,data)=>{
+  cp.execFile("runas /user:Administator "+savePath,(err,data)=>{
       if(err){
         InstallationError(err)    
       }else{
@@ -211,7 +223,8 @@ function OpenInstallationDirectory(){
  */
 function SetJavaEnvironmentVariableCommand(){
   var installationPath = localStorage.getItem("jdk_installation_path");
-  cp.exec(`setx -m JAVA_HOME "${installationPath}"`,function(err,stdout,stderr){
+  //set PATH="%PATH%;C:\Program Files\Java\jdk1.6.0_18\bin"
+  //DANGER sudo.exec(`setx path "%path%;${installationPath}"`,function(err,stdout,stderr){
     if(err){
       console.log(localStorage.getItem("jdk_installation_path"));
       console.log(err);
