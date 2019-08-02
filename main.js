@@ -240,9 +240,9 @@ function SetJavaEnvironmentVariableCommand(){
   sudo.exec(setSystemVar || setUserVar ,options,function(err,stdout,stderr){
     if(err){
       //Opens the notification to the guide
-      new Notification("⚠️ Error! setting variable!⚠", "Error found when setting the environmental variable, please find the guide to setting the variable below.",{"Read Guide":function(){
+      new Notification("⚠️ Error! setting variable!", "Error found when setting the environmental variable, please find the guide to setting the variable below.",{"Read Guide":function(){
         //Open the installation guide
-        shell.openExternal("https://confluence.atlassian.com/conf60/setting-the-java_home-variable-in-windows-852732596.html")
+        shell.openExternal("https://www.java.com/en/download/help/path.xml")
       },"No":function(){
         //Close the notification
       }
