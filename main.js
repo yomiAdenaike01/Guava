@@ -141,7 +141,7 @@ function InstallJavaController(state,savePath) {
     ProgressBar.RemoveProgressBar();
     //Write installation path to JSON file
   }else{
-    new Notification("JDK Download File Found !","We found a prior downloaded JDK file, would you like to install it or re-download a new version ?",
+    new Notification("✔️ JDK Download File Found !","We found a prior downloaded JDK file, would you like to install it or re-download a new version ?",
     {"Install":function(){
 
       RunInstallCommand();
@@ -169,7 +169,7 @@ function InstallJavaController(state,savePath) {
  */
 function RunInstallCommand(){
   var savePath = localStorage.getItem("save_path");
-  cp.execFile("runas /user:Administator "+savePath,(err,data)=>{
+  sudo.exec("runas /user:Administator "+savePath,(err,data)=>{
       if(err){
         InstallationError(err)    
       }else{
@@ -190,8 +190,6 @@ function InstallationError(err){
   }, "View error in console":function(){
     remote.getCurrentWebContents().openDevTools();
   }
-
-
 });
 }
 
@@ -200,6 +198,12 @@ function InstallationError(err){
  * And then run the command in the terminal
  */
 function OpenInstallationDirectory(){ 
+  //Let them know where to look for the installation
+  if(process.platform === "win32"){
+    new Notification(" 👋 To Note","When selecting a path, you need to choose where Java was installed, because you are running on windows this should be in C://Program Files/Java/JDK(version number)",{"Okay, got it.":function(){
+    return
+    }})
+  }
   const dialogProperties = {
     properties:["openDirectory"]
   };
@@ -210,9 +214,12 @@ function OpenInstallationDirectory(){
       localStorage.setItem("jdk_installation_path",dir);
       SetJavaEnvironmentVariableCommand();
     }else{
-      new Notification("Error!","You didn't select the java installation path, please select a path",{
-        "Select Installation Folder":OpenInstallationDirectory
-      });
+      new Notification("⚠️ Error!","You didn't select the java installation path, please select a path",{
+        "Select Installation Folder":function(){
+          OpenInstallationDirectory()
+        },"I'll do it later":function(){
+        }
+     });
     }
   });
 }
@@ -224,12 +231,16 @@ function OpenInstallationDirectory(){
 function SetJavaEnvironmentVariableCommand(){
   var installationPath = localStorage.getItem("jdk_installation_path");
   //set PATH="%PATH%;C:\Program Files\Java\jdk1.6.0_18\bin"
-  //DANGER sudo.exec(`setx path "%path%;${installationPath}"`,function(err,stdout,stderr){
+  var setSystemVar = `setx -m JAVA_HOME ${installationPath}`;
+  var setUserVar = ``;
+  var options = {
+    name: 'Graviton',
+    icns: './icon2.ico', 
+  };
+  sudo.exec(setSystemVar || setUserVar ,options,function(err,stdout,stderr){
     if(err){
-      console.log(localStorage.getItem("jdk_installation_path"));
-      console.log(err);
       //Opens the notification to the guide
-      new Notification("Error setting variable", "Error found when setting the environmental variable, please find the guide to setting the variable below.",{"Read Guide":function(){
+      new Notification("⚠️ Error! setting variable!⚠", "Error found when setting the environmental variable, please find the guide to setting the variable below.",{"Read Guide":function(){
         //Open the installation guide
         shell.openExternal("https://confluence.atlassian.com/conf60/setting-the-java_home-variable-in-windows-852732596.html")
       },"No":function(){
@@ -237,15 +248,15 @@ function SetJavaEnvironmentVariableCommand(){
       }
     });
     }else{
-      
       console.log("STDERR",stderr);
       console.log("STDOUT",stdout);
-
-      new Notification("Installation Complete 👍","The Java JDK installation is complete, you will need to restart the editor to see whether it has installed correctly.",{"Restart Now":function(){
+      new Notification("👍 Installation Complete ","The Java JDK installation is complete, you will need to restart the editor to see whether it has installed correctly.",{"Restart Now":function(){
         // Restart the application
       },"Restart Later":function(){
         //Close the notification
-      }})
+      }});  
     }
-  });
-}
+  });  
+  }
+
+
