@@ -1,8 +1,8 @@
 {
   "name": "Guava",
   "folder": "guava",
-  "version": "0.0.1",
-  "description": "A plugin that will download and install Java on the user's machine if they don't have it.",
+  "version": "1.0.0",
+  "description": "A plugin to automate the downloading and installing of Java on a user's machine.",
   "main": "main.js",
   "dependencies": {
     "electron": "^6.0.0"
