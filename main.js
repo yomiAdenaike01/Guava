@@ -45,12 +45,6 @@ function init(){
     InstallJavaController("installation_found",localStorage.getItem("save_path"));
   }
 }
-/**
- * Displays prompt to run the commands
- */
-function RequestPermissions(){
-
-}
 
 /**
  * Check for java
@@ -73,7 +67,7 @@ function RunJavaCheck(){
  * @param {*} err
  * Requests to download java 
  */
-const InitJavaDownloadAndInstallation = (err) => {
+function InitJavaDownloadAndInstallation(err) {
   console.log(localStorage.getItem("save_path"));
    new Notification("Java compiler not found","Do you want to download Java ?",{
     "Download Java":DownloadJava
@@ -133,8 +127,9 @@ function DownloadJava() {
 
 
 /**
- * Controls the installlation process
- * Hoisting 
+ * 
+ * @param {*} state 
+ * @param {*} savePath 
  */
 function InstallJavaController(state,savePath) {
   if(state !== "installation_found"){
@@ -231,8 +226,18 @@ function OpenInstallationDirectory(){
 function SetJavaEnvironmentVariableCommand(){
   var installationPath = localStorage.getItem("jdk_installation_path");
   //set PATH="%PATH%;C:\Program Files\Java\jdk1.6.0_18\bin"
-  var setSystemVar = `setx -m JAVA_HOME ${installationPath}`;
-  var setUserVar = ``;
+  var setSystemVar;
+  var setUserVar;
+  if(process.platform === "win32"){
+    setSystemVar = `setx -m JAVA_HOME ${installationPath}`;
+    setUserVar = ``;
+  }else if(process.platform === "darwin"){
+    setSystemVar = `setx -m JAVA_HOME ${installationPath}`;
+    setUserVar = ``;
+  }else{
+    setSystemVar = `setx -m JAVA_HOME ${installationPath}`;
+    setUserVar = ``;
+  }
   var options = {
     name: 'Graviton',
     icns: './icon2.ico', 
@@ -240,7 +245,7 @@ function SetJavaEnvironmentVariableCommand(){
   sudo.exec(setSystemVar || setUserVar ,options,function(err,stdout,stderr){
     if(err){
       //Opens the notification to the guide
-      new Notification("⚠️ Error! setting variable!", "Error found when setting the environmental variable, please find the guide to setting the variable below.",{"Read Guide":function(){
+      new Notification("⚠️ Could not set variable", "Error found when setting the environmental variable, please find the guide to setting the variable below.",{"Read Guide":function(){
         //Open the installation guide
         shell.openExternal("https://www.java.com/en/download/help/path.xml")
       },"No":function(){
@@ -257,6 +262,6 @@ function SetJavaEnvironmentVariableCommand(){
       }});  
     }
   });  
-  }
-
+  
+}
 

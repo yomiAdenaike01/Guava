@@ -1,5 +1,5 @@
 
-const CreateProgressBar = () =>{
+function CreateProgressBar(){
     //Create the wrapper
     let progressBar = document.createElement("div");
     progressBar.classList.add("download_progress_bar");
@@ -22,6 +22,7 @@ const CreateProgressBar = () =>{
     innerBar.style.background = "linear-gradient(120deg, #fc1163 0%, #ee8027 100%)";
     innerBar.style.top = "0";
     innerBar.style.bottom = "0";
+    innerBar.style.transition = ".56s ease all";
     innerBar.style.borderRadius = progressBar.style.borderRadius;
 
     //Append innerbar
@@ -36,7 +37,7 @@ const CreateProgressBar = () =>{
    * Updates the progress bar
    * @param {*} progress 
    */
-  const UpdateProgressBar = (progress) => {
+  function UpdateProgressBar(progress) {
     if(document.querySelector(".inner-bar")){
       let depreciatingProgress = 100 - progress;
       let innerProgressBar = document.querySelector(".inner-bar");
