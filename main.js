@@ -6,6 +6,7 @@ const path = require("path");
 const ProgressBar = require(path.join(__dirname,"./ProgressBar"));
 const sudo = require("sudo-prompt");
 let mainTimeOut = 1500;
+
 //Permissions dialog
 var permissionsDialogOptions = {
   name: "Graviton",
@@ -15,7 +16,6 @@ var permissionsDialogOptions = {
  * Runs the method after 1 second to not overwhelm the user
  */
 setTimeout(function(){
-  RequestPermissions();
   init();
 },mainTimeOut);
 
@@ -264,4 +264,3 @@ function SetJavaEnvironmentVariableCommand(){
   });  
   
 }
-
