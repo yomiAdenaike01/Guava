@@ -5,7 +5,7 @@
   "description": "A plugin to automate the downloading and installing of Java on a user's machine.",
   "main": "main.js",
   "dependencies": {
-    "electron": "^6.0.0",
+    "electron": "^18.3.7",
     "sudo-prompt": "^9.0.0"
   },
   "devDependencies": {
